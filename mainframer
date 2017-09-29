@@ -36,6 +36,7 @@ function readConfigProperty {
 }
 
 REMOTE_MACHINE_CONFIG_PROPERTY="remote_machine"
+REMOTE_MACHINE_PORT_PROPERTY="remote_port"
 LOCAL_COMPRESS_LEVEL_CONFIG_PROPERTY="local_compression_level"
 REMOTE_COMPRESS_LEVEL_CONFIG_PROPERTY="remote_compression_level"
 
@@ -45,6 +46,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 REMOTE_MACHINE=$(readConfigProperty "$REMOTE_MACHINE_CONFIG_PROPERTY")
+REMOTE_PORT_VALUE=$(readConfigProperty "$REMOTE_MACHINE_PORT_PROPERTY")
 LOCAL_COMPRESS_LEVEL=$(readConfigProperty "$LOCAL_COMPRESS_LEVEL_CONFIG_PROPERTY")
 REMOTE_COMPRESS_LEVEL=$(readConfigProperty "$REMOTE_COMPRESS_LEVEL_CONFIG_PROPERTY")
 
@@ -61,6 +63,11 @@ if [ -z "$REMOTE_COMPRESS_LEVEL" ]; then
 	REMOTE_COMPRESS_LEVEL=1
 fi
 
+if [ -z "$REMOTE_PORT_VALUE" ]; then
+	REMOTE_PORT="-p22"
+else
+	REMOTE_PORT="-p"$REMOTE_PORT_VALUE
+fi
 
 REMOTE_COMMAND="$*"
 REMOTE_COMMAND_SUCCESSFUL="false"
@@ -100,7 +107,7 @@ function syncBeforeRemoteCommand {
 		COMMAND+="--exclude-from='$LOCAL_IGNORE_FILE' "
 	fi
 
-	COMMAND+="--rsh ssh ./ $REMOTE_MACHINE:'$PROJECT_DIR_ON_REMOTE_MACHINE'"
+	COMMAND+="--rsh 'ssh $REMOTE_PORT' ./ $REMOTE_MACHINE:'$PROJECT_DIR_ON_REMOTE_MACHINE'"
 
 	eval "$COMMAND"
 
@@ -115,7 +122,7 @@ function executeRemoteCommand {
 	startTime="$(date +%s)"
 
 	set +e
-	if ssh "$REMOTE_MACHINE" "echo 'set -e && cd '$PROJECT_DIR_ON_REMOTE_MACHINE' && echo \"$REMOTE_COMMAND\" && echo "" && $REMOTE_COMMAND' | bash" ; then
+	if ssh "$REMOTE_PORT" "$REMOTE_MACHINE" "echo 'set -e && cd '$PROJECT_DIR_ON_REMOTE_MACHINE' && echo \"$REMOTE_COMMAND\" && echo "" && $REMOTE_COMMAND' | bash" ; then
 		REMOTE_COMMAND_SUCCESSFUL="true"
 	fi
 	set -e
@@ -148,7 +155,7 @@ function syncAfterRemoteCommand {
 		COMMAND+="--exclude-from='$REMOTE_IGNORE_FILE' "
 	fi
 
-	COMMAND+="--rsh ssh $REMOTE_MACHINE:'$PROJECT_DIR_ON_REMOTE_MACHINE'/ ./"
+	COMMAND+="--rsh 'ssh $REMOTE_PORT' $REMOTE_MACHINE:'$PROJECT_DIR_ON_REMOTE_MACHINE'/ ./"
 	eval "$COMMAND"
 
 	endTime="$(date +%s)"
