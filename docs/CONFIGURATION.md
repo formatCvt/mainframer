@@ -24,12 +24,17 @@ in the root directory of your project.
 
 ```properties
 remote_machine={REMOTE_MACHINE_ALIAS}
+remote_port={REMOTE_MACHINE_PORT}
 local_compression_level={LEVEL}
 remote_compression_level={LEVEL}
 ```
 
 * `remote_machine` — remote machine name from SSH config.
  * Required: yes.
+* `remote_port` — remote machine port from SSH config.
+ * Required: no.
+ * Possible values: `1`—`65535`.
+ * Default value: `22`. 
 * `local_compression_level` — compression level used to send files from local machine to remote one.
  * Required: no.
  * Possible values: `0`—`9`.
